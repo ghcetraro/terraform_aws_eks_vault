@@ -1,0 +1,83 @@
+global:
+  enabled: true
+  tlsDisable: false
+
+injector:
+  enabled: true
+  image:
+    repository: "hashicorp/vault-k8s"
+    tag: "1.4.2"
+
+agentImage:
+  repository: "hashicorp/vault"
+  tag: "1.17.2"
+
+server:
+  image:
+    repository: "hashicorp/vault"
+    tag: "1.17.2"
+    pullPolicy: IfNotPresent
+
+  extraEnvironmentVars:
+    VAULT_CACERT: /vault/userconfig/vault-server-tls/vault.ca
+
+  dataStorage:
+    enabled: false
+    size: 10Gi
+
+  auditStorage:
+    enabled: false
+    size: 10Gi
+
+  extraVolumes:
+  - name: vault-server-tls
+    type: secret
+    secretName: vault-server-tls
+
+  standalone:
+    enabled: false
+
+  serviceAccount:
+    create: true
+    name: "${serviceAccountName}"
+    annotations: |
+      "eks.amazonaws.com/role-arn" : "${iam_role_arn}"
+
+  ha:
+    enabled: true
+    replicas: 3
+    config: |
+      ui = true
+      listener "tcp" {
+        address = "[::]:8200"
+        cluster_address = "[::]:8201"
+        tls_cert_file = "/vault/userconfig/vault-server-tls/vault.crt"
+        tls_key_file  = "/vault/userconfig/vault-server-tls/vault.key"
+        tls_client_ca_file = "/vault/userconfig/vault-server-tls/vault.ca"
+        }
+
+      storage "dynamodb" {
+        ha_enabled = "true"
+        region = "${region}"
+        table = "${table}"
+        }
+
+      seal "awskms" {
+      region     = "${region}"
+      kms_key_id = "${kms_key_id}"
+      }
+    
+      service_registration "kubernetes" {}
+
+ui:
+  enabled: true
+  serviceType: LoadBalancer
+  serviceNodePort: null
+  externalPort: 8200
+  annotations: |
+    "service.beta.kubernetes.io/aws-load-balancer-internal": "true"
+    "service.beta.kubernetes.io/aws-load-balancer-ssl-cert": "${acm_arn}"
+    "service.beta.kubernetes.io/aws-load-balancer-backend-protocol": https
+    "service.beta.kubernetes.io/aws-load-balancer-ssl-ports": "443,8443,8200"
+  loadBalancerSourceRanges:
+  - 10.0.0.0/8
