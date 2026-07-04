@@ -163,3 +163,25 @@ Save in here :
 ## Example URL of the server
 
 	https://vault.devops.io:8200
+
+---
+
+## Documentación del proyecto
+
+- [Changelog](CHANGELOG.md)
+- [Contribuir](CONTRIBUTING.md)
+
+---
+
+## Seguridad
+
+No commitees tokens de Vault, recovery keys ni claves TLS privadas.
+
+Ver [SECURITY.md](SECURITY.md).
+
+---
+
+## Licencia
+
+[MIT](LICENSE) — Copyright (c) Gabriel Cetraro
+
